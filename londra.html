@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Londra · Giornata</title>
+
+  <!-- iOS PWA -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Londra">
+
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --navy:      #0d2240;
+      --red:       #cf142b;
+      --gold:      #e8a020;
+      --gold-dim:  #b87a18;
+      --bg:        #f5f4f0;
+      --surface:   #ffffff;
+      --border:    #dddbd5;
+      --text:      #1a1a1a;
+      --muted:     #666560;
+      --ok:        #1e7a45;
+      --warn:      #b85c00;
+      --radius:    12px;
+      --shadow:    0 2px 8px rgba(0,0,0,.10);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:      #111418;
+        --surface: #1c2028;
+        --border:  #2e3340;
+        --text:    #edecea;
+        --muted:   #8a8880;
+        --shadow:  0 2px 8px rgba(0,0,0,.40);
+      }
+    }
+
+    /* ── RESET & BASE ───────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.55;
+      padding-bottom: env(safe-area-inset-bottom, 24px);
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    header {
+      background: var(--navy);
+      color: #fff;
+      padding: 20px 20px 18px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-inner { max-width: 560px; margin: 0 auto; }
+    .header-flag { font-size: 22px; margin-bottom: 4px; }
+    header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      line-height: 1.2;
+    }
+    header p {
+      font-size: .82rem;
+      color: rgba(255,255,255,.65);
+      margin-top: 4px;
+    }
+    .header-badge {
+      display: inline-block;
+      background: var(--red);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+
+    /* ── MAIN CONTAINER ─────────────────────────────────── */
+    main { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+
+    /* ── SECTION TITLES ─────────────────────────────────── */
+    .section-title {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 24px 0 10px;
+    }
+
+    /* ── TIMELINE ───────────────────────────────────────── */
+    .timeline { position: relative; }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 46px;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--red), var(--gold));
+      border-radius: 2px;
+    }
+
+    /* ── STOP CARD ──────────────────────────────────────── */
+    .stop {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 0 14px;
+      margin-bottom: 12px;
+    }
+    .stop-time {
+      text-align: right;
+      padding-top: 14px;
+      font-size: .78rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--gold-dim);
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .stop-dot {
+      position: absolute;
+      left: 40px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+      background: var(--red);
+      margin-top: 16px;
+      z-index: 1;
+    }
+
+    /* summary as the card header */
+    details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    details summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 14px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    .stop-icon {
+      font-size: 1.35rem;
+      flex-shrink: 0;
+      line-height: 1;
+      padding-top: 2px;
+    }
+    .stop-header { flex: 1; }
+    .stop-name {
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+    .stop-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 5px;
+    }
+    .tag {
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .tag-duration  { background: rgba(13,34,64,.10); color: var(--navy); }
+    .tag-energy    { background: rgba(207,20,43,.10); color: var(--red); }
+    .tag-key       { background: rgba(30,122,69,.12); color: var(--ok); }
+    @media (prefers-color-scheme: dark) {
+      .tag-duration { background: rgba(255,255,255,.08); color: var(--muted); }
+      .tag-energy   { background: rgba(207,20,43,.20); color: #ff8090; }
+      .tag-key      { background: rgba(30,122,69,.20); color: #6ee09a; }
+    }
+    .chevron {
+      font-size: .9rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      padding-top: 3px;
+      transition: transform .2s ease;
+    }
+    details[open] .chevron { transform: rotate(90deg); }
+
+    /* detail body */
+    .stop-body {
+      padding: 0 14px 14px 14px;
+      border-top: 1px solid var(--border);
+    }
+    .stop-body ul {
+      padding-left: 16px;
+      margin-top: 10px;
+    }
+    .stop-body li {
+      font-size: .9rem;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+    .stop-body li:last-child { margin-bottom: 0; }
+    .stop-note {
+      font-size: .82rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border-radius: 8px;
+      border-left: 3px solid var(--gold);
+    }
+
+    /* maps link */
+    .maps-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 10px;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--navy);
+      text-decoration: none;
+      padding: 6px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .maps-link { color: #a8c4f0; }
+    }
+
+    /* ── ADHD TIPS TABLE ────────────────────────────────── */
+    .tips-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .tips-col {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .tips-col-header {
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+    }
+    .tips-col-ok   .tips-col-header { background: rgba(30,122,69,.12); color: var(--ok); }
+    .tips-col-warn .tips-col-header { background: rgba(207,20,43,.10); color: var(--red); }
+    @media (prefers-color-scheme: dark) {
+      .tips-col-ok   .tips-col-header { background: rgba(30,122,69,.22); color: #6ee09a; }
+      .tips-col-warn .tips-col-header { background: rgba(207,20,43,.22); color: #ff8090; }
+    }
+    .tips-col ul { padding: 8px 12px 10px 22px; }
+    .tips-col li {
+      font-size: .82rem;
+      color: var(--text);
+      margin-bottom: 5px;
+      line-height: 1.4;
+    }
+    .tips-col li:last-child { margin-bottom: 0; }
+
+    /* ── LOGISTICS CARD ─────────────────────────────────── */
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-top: 4px;
+    }
+    .info-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-icon { font-size: 1.1rem; flex-shrink: 0; padding-top: 1px; }
+    .info-text { font-size: .88rem; color: var(--text); }
+    .info-text strong { font-weight: 700; }
+
+    /* ── FOOTER ─────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 32px 20px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+    footer a {
+      color: var(--muted);
+      text-decoration: underline dotted;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-flag">🇬🇧</div>
+    <h1>Giornata a Londra</h1>
+    <p>Marylebone · Leicester Sq · Borough · Thames · Tate Britain</p>
+    <span class="header-badge">🧠 Piano giornata</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- TIMELINE -->
+  <p class="section-title">Programma</p>
+  <div class="timeline">
+
+    <!-- STOP 1 -->
+    <div class="stop">
+      <div class="stop-time">9:00</div>
+      <div style="position:relative">
+        <div class="stop-dot"></div>
+        <details>
+          <summary>
+            <span class="stop-icon">📚</span>
+            <div class="stop-header">
+              <div class="stop-name">Marylebone High Street</div>
+              <div class="stop-meta">
+                <span class="tag tag-duration">⏱ 1h max</span>
+                <span class="tag tag-key">Partenza fresca</span>
+              </div>
+            </div>
+            <span class="chevron">›</span>
+          </summary>
+          <div class="stop-body">
+            <ul>
+              <li><strong>Daunt Books</strong> — missione precisa: scegli UN libro o UN fumetto. Tempo massimo 15 min.</li>
+              <li>Passeggiata senza meta lungo la strada — stimoli visivi, vetrine, nessuna pressione.</li>
+              <li>Colazione seduti, con calma.</li>
+            </ul>
+            <p class="stop-note">🧠 Massimo 1h — esci prima che si stufi. Il mattino è la finestra migliore di attenzione.</p>
+            <a class="maps-link" href="https://maps.google.com/?q=Marylebone+High+Street+London" target="_blank">📍 Apri in Maps</a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- STOP 2 -->
+    <div class="stop">
+      <div class="stop-time">10:15</div>
+      <div style="position:relative">
+        <div class="stop-dot"></div>
+        <details>
+          <summary>
+            <span class="stop-icon">🌿</span>
+            <div class="stop-header">
+              <div class="stop-name">Regent's Park</div>
+              <div class="stop-meta">
+                <span class="tag tag-duration">⏱ 30–40 min</span>
+                <span class="tag tag-energy">Scarica energia</span>
+              </div>
+            </div>
+            <span class="chevron">›</span>
+          </summary>
+          <div class="stop-body">
+            <ul>
+              <li>Corsa libera sul prato — papere, fontane, spazio aperto.</li>
+              <li><strong>Playground vicino a Hanover Gate</strong> — ottimo per bambini 6–10 anni.</li>
+              <li>5 minuti a piedi da Marylebone High Street.</li>
+            </ul>
+            <p class="stop-note">🧠 Tappa fondamentale. Scarica fisicamente prima delle tappe indoor — non saltarla anche se sembrate in orario.</p>
+            <a class="maps-link" href="https://maps.google.com/?q=Regent%27s+Park+Hanover+Gate+Playground+London" target="_blank">📍 Apri in Maps</a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- STOP 3 -->
+    <div class="stop">
+      <div class="stop-time">11:15</div>
+      <div style="position:relative">
+        <div class="stop-dot"></div>
+        <details>
+          <summary>
+            <span class="stop-icon">🧱</span>
+            <div class="stop-header">
+              <div class="stop-name">Leicester Square · LEGO Store</div>
+              <div class="stop-meta">
+                <span class="tag tag-duration">⏱ 45 min</span>
+                <span class="tag tag-key">Hands-on</span>
+              </div>
+            </div>
+            <span class="chevron">›</span>
+          </summary>
+          <div class="stop-body">
+            <ul>
+              <li><strong>LEGO Store</strong> — muri di mattoncini sfusi, costruzioni libere, stimolo alto, nessuna coda.</li>
+              <li>Street performer in piazza: osservate da fuori, senza spingersi nella folla.</li>
+              <li>Salta M&amp;Ms World — troppo caotico e sensorialmente saturante.</li>
+            </ul>
+            <p class="stop-note">🧠 Il LEGO Store è ideale per ADHD: mani occupate, libertà di movimento, nessuna regola da rispettare. Budget un gadget come reward.</p>
+            <a class="maps-link" href="https://maps.google.com/?q=LEGO+Store+Leicester+Square+London" target="_blank">📍 Apri in Maps</a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- STOP 4 -->
+    <div class="stop">
+      <div class="stop-time">12:30</div>
+      <div style="position:relative">
+        <div class="stop-dot"></div>
+        <details>
+          <summary>
+            <span class="stop-icon">🍴</span>
+            <div class="stop-header">
+              <div class="stop-name">Borough Market — Pranzo</div>
+              <div class="stop-meta">
+                <span class="tag tag-duration">⏱ 1h max</span>
+                <span class="tag tag-key">Prima del picco</span>
+              </div>
+            </div>
+            <span class="chevron">›</span>
+          </summary>
+          <div class="stop-body">
+            <ul>
+              <li>Arriva alle 12:30 prima del picco di folla.</li>
+              <li>Strategia: <strong>una missione per ciascuno</strong> — lui sceglie una cosa da mangiare girando liberamente.</li>
+              <li>Siediti all'aperto su Stoney Street, non nei corridoi interni stretti.</li>
+              <li>Opzioni: arancini siciliani, pulled pork bun, porchetta, fish &amp; chips.</li>
+            </ul>
+            <p class="stop-note">🧠 Evita i corridoi interni se è già su di giri. All'aperto ha più spazio e meno stimoli sovrapposti. Porta snack proteici per il pomeriggio.</p>
+            <a class="maps-link" href="https://maps.google.com/?q=Borough+Market+London+Bridge" target="_blank">📍 Apri in Maps</a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- STOP 5 -->
+    <div class="stop">
+      <div class="stop-time">13:45</div>
+      <div style="position:relative">
+        <div class="stop-dot"></div>
+        <details>
+          <summary>
+            <span class="stop-icon">⛵</span>
+            <div class="stop-header">
+              <div class="stop-name">Thames Clipper → Millbank</div>
+              <div class="stop-meta">
+                <span class="tag tag-duration">⏱ 35 min</span>
+                <span class="tag tag-key">Reset mentale</span>
+              </div>
+            </div>
+            <span class="chevron">›</span>
+          </summary>
+          <div class="stop-body">
+            <ul>
+              <li>Da <strong>London Bridge City Pier</strong> → <strong>Millbank Pier</strong> (Tate Britain).</li>
+              <li>Biglietto ~£6–8 con contactless TfL (coperto dal cap giornaliero).</li>
+              <li>Stai sul <strong>ponte esterno</strong> — spazio, vento, libertà di muoversi.</li>
+              <li>Vista Tower Bridge, Southbank, Houses of Parliament.</li>
+            </ul>
+            <p class="stop-note">🧠 Per un bambino con ADHD è probabilmente il momento migliore della giornata: movimento, aria aperta, stimoli visivi che cambiano continuamente — senza restare fermi.</p>
+            <a class="maps-link" href="https://maps.google.com/?q=London+Bridge+City+Pier" target="_blank">📍 Pier di partenza</a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- STOP 6 -->
+    <div class="stop">
+      <div class="stop-time">14:30</div>
+      <div style="position:relative">
+        <div class="stop-dot"></div>
+        <details open>
+          <summary>
+            <span class="stop-icon">🎨</span>
+            <div class="stop-header">
+              <div class="stop-name">Tate Britain</div>
+              <div class="stop-meta">
+                <span class="tag tag-duration">⏱ 45–60 min</span>
+                <span class="tag tag-energy">Non forzare oltre</span>
+              </div>
+            </div>
+            <span class="chevron">›</span>
+          </summary>
+          <div class="stop-body">
+            <ul>
+              <li>Prendi la <strong>family trail map</strong> all'ingresso — obiettivo visivo chiaro: "troviamo questi 5 quadri".</li>
+              <li><strong>Sale Turner</strong>: grandi, luminose, visivamente potenti.</li>
+              <li><strong>Duveen Galleries</strong> (sculture enormi, spazio aperto) — può muoversi liberamente intorno alle opere.</li>
+              <li>Ingresso gratuito. Chiude alle 18:00, ultimo ingresso 17:30.</li>
+            </ul>
+            <p class="stop-note">🧠 Se si stufa dopo 30 minuti: va benissimo, uscite. Il giardino esterno è bellissimo. Non forzare la seconda ora — meglio finire bene che rovinare la giornata.</p>
+            <a class="maps-link" href="https://maps.google.com/?q=Tate+Britain+Millbank+London" target="_blank">📍 Apri in Maps</a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- STOP 7 -->
+    <div class="stop">
+      <div class="stop-time">15:30</div>
+      <div style="position:relative">
+        <div class="stop-dot" style="background: var(--ok)"></div>
+        <details>
+          <summary>
+            <span class="stop-icon">✅</span>
+            <div class="stop-header">
+              <div class="stop-name">Fine giornata — Rientro</div>
+              <div class="stop-meta">
+                <span class="tag tag-key">Prima del crollo</span>
+              </div>
+            </div>
+            <span class="chevron">›</span>
+          </summary>
+          <div class="stop-body">
+            <ul>
+              <li>Bus <strong>87 o 77</strong> da Millbank → Victoria → East London.</li>
+              <li>Oppure Tube: Pimlico (Victoria line) → Bethnal Green.</li>
+              <li>Giornata chiusa prima che sia esausto — non provare ad aggiungere tappe.</li>
+            </ul>
+            <p class="stop-note">🧠 Il segreto è finire prima della saturazione. Una giornata da 6h ben gestita vale più di 9h che finiscono male.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+  </div><!-- end timeline -->
+
+
+  <!-- LOGISTICS -->
+  <p class="section-title">Logistica rapida</p>
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-icon">🚇</span>
+      <span class="info-text"><strong>Leicester Sq → Borough Market:</strong> Northern line, 2 fermate, 5 min.</span>
+    </div>
+    <div class="info-row">
+      <span class="info-icon">⛵</span>
+      <span class="info-text"><strong>Thames Clipper RB1/RB6:</strong> London Bridge City Pier → Millbank Pier, ~35 min. Contactless TfL.</span>
+    </div>
+    <div class="info-row">
+      <span class="info-icon">☀️</span>
+      <span class="info-text"><strong>Caldo:</strong> Crema solare prima di uscire. Borraccia sempre con te. Tate Britain è climatizzata — perfetta per le ore calde.</span>
+    </div>
+    <div class="info-row">
+      <span class="info-icon">🍫</span>
+      <span class="info-text"><strong>Snack:</strong> Porta sempre qualcosa di proteico in tasca. Il crollo glicemico + la stanchezza è la combo più pericolosa.</span>
+    </div>
+    <div class="info-row">
+      <span class="info-icon">💷</span>
+      <span class="info-text"><strong>Contante:</strong> Spiccioli per gli artisti di strada (£1–2 a numero). Tutto il resto con contactless.</span>
+    </div>
+  </div>
+
+
+  <!-- ADHD TIPS -->
+  <p class="section-title">Gestione · Promemoria</p>
+  <div class="tips-grid">
+    <div class="tips-col tips-col-ok">
+      <div class="tips-col-header">✅ Fai</div>
+      <ul>
+        <li>Annuncia le transizioni con 10 minuti di anticipo</li>
+        <li>Lascia che guidi lui alcune scelte</li>
+        <li>Usa il Clipper come reset mentale</li>
+        <li>Porta snack proteici sempre</li>
+        <li>Esci dal museo prima che sia esausto</li>
+      </ul>
+    </div>
+    <div class="tips-col tips-col-warn">
+      <div class="tips-col-header">❌ Evita</div>
+      <ul>
+        <li>Code lunghe senza alternativa</li>
+        <li>Farlo stare fermo ad aspettare</li>
+        <li>Troppi input consecutivi senza pausa fisica</li>
+        <li>Musei affollati nel tardo pomeriggio</li>
+        <li>Dire "ancora un po'" quando è oltre soglia</li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>UK 2026 · <a href="index.html">← Torna all'itinerario</a></p>
+</footer>
+
+<script>
+  // Enhance: remember open/closed state per card
+  document.querySelectorAll('details').forEach((el, i) => {
+    const key = 'adhd-stop-' + i;
+    try {
+      if (localStorage.getItem(key) === 'open') el.open = true;
+      if (localStorage.getItem(key) === 'closed') el.open = false;
+    } catch(e) {}
+    el.addEventListener('toggle', () => {
+      try { localStorage.setItem(key, el.open ? 'open' : 'closed'); }
+      catch(e) {}
+    });
+  });
+</script>
+
+</body>
+</html>
